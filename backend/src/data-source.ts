@@ -27,8 +27,9 @@ const parseDatabaseUrl = (raw: string): Connection => {
 
     if (socketForm) {
         // postgresql://user:password@/dbname?host=/var/run/postgresql
-        const [, userinfo, database, query] = socketForm
-        const params = new URLSearchParams(query ?? '')
+        const userinfo = socketForm[1] ?? ''
+        const database = socketForm[2] ?? ''
+        const params = new URLSearchParams(socketForm[3] ?? '')
         const separator = userinfo.indexOf(':')
         return {
             host: params.get('host') ?? '/var/run/postgresql',
