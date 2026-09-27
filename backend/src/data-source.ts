@@ -2,13 +2,6 @@ import { DataSource } from 'typeorm'
 import { Product } from './entity/Product'
 import { CreateProduct1730000000000 } from './migrations/1730000000000-CreateProduct'
 
-// The URL API percent-encodes userinfo but does not decode it, and a bare '%'
-// is not a valid escape sequence, so decodeURIComponent would throw. Treat a
-// '%' that does not start a valid escape as a literal, so a password
-// containing one works whether or not it was percent-encoded.
-const decodeUserinfo = (value: string) =>
-    decodeURIComponent(value.replace(/%(?![0-9a-fA-F]{2})/g, '%25'))
-
 type Connection = {
     host: string
     port: number
@@ -16,6 +9,13 @@ type Connection = {
     password: string
     database: string
 }
+
+// The URL API percent-encodes userinfo but does not decode it, and a bare '%'
+// is not a valid escape sequence, so decodeURIComponent would throw. Treat a
+// '%' that does not start a valid escape as a literal, so a password
+// containing one works whether or not it was percent-encoded.
+const decodeUserinfo = (value: string) =>
+    decodeURIComponent(value.replace(/%(?![0-9a-fA-F]{2})/g, '%25'))
 
 // Parsed here rather than by handing TypeORM `url`, because TypeORM forwards
 // `url` to node-postgres as a connectionString, where pg-connection-string
@@ -68,13 +68,21 @@ const parseDatabaseUrl = (raw: string): Connection => {
     }
 }
 
-const databaseUrl = process.env.DATABASE_URL
+const resolveConnection = (): Connection => {
+    if (process.env.DATABASE_URL) {
+        return parseDatabaseUrl(process.env.DATABASE_URL)
+    }
 
-if (!databaseUrl) {
-    throw new Error('DATABASE_URL is required')
+    return {
+        host: process.env.DB_HOST ?? '',
+        port: Number(process.env.DB_PORT),
+        username: process.env.DB_USERNAME ?? '',
+        password: process.env.DB_PASSWORD ?? '',
+        database: process.env.DB_DATABASE ?? '',
+    }
 }
 
-const connection = parseDatabaseUrl(databaseUrl)
+const connection = resolveConnection()
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
