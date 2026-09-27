@@ -18,7 +18,9 @@ const createPortSchema = (name: string) =>
 const envSchema = z
     .object({
         PORT: createPortSchema('PORT'),
-        DATABASE_URL: z.string().min(1).optional(),
+        // an empty value counts as unset, so a service can carry an empty
+        // DATABASE_URL and fall back to the DB_* variables
+        DATABASE_URL: z.string().optional(),
         DB_HOST: z.string().min(1, 'DB_HOST is required').optional(),
         DB_PORT: z.string().min(1, 'DB_PORT is required').optional(),
         DB_USERNAME: z.string().min(1, 'DB_USERNAME is required').optional(),
